@@ -1,5 +1,5 @@
 <div align="center">
-    <img src = "images/quest-bootstrap-logo.png" width"1400" height="250" alt="API" />
+    <img src = "images/quest-bootstrap-logo.png" width"2000" height="500" alt="API" />
 </div>
 
 # quest-bootstrap
