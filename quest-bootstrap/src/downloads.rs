@@ -3,6 +3,7 @@ use reqwest::blocking::Client;
 use std::fs::File;
 use std::io::copy;
 use std::path::Path;
+use std::process::Command;
 
 pub struct Download {
     pub name: &'static str,
@@ -10,11 +11,50 @@ pub struct Download {
     pub file: &'static str,
 }
 
+fn is_tool_installed(name: &str) -> bool {
+    match name {
+        "Python" => {
+            Command::new("python3")
+                .arg("--version")
+                .output()
+                .is_ok_and(|o| o.status.success())
+                || Command::new("python")
+                    .arg("--version")
+                    .output()
+                    .is_ok_and(|o| o.status.success())
+        }
+        "Git" => {
+            Command::new("git")
+                .arg("--version")
+                .output()
+                .is_ok_and(|o| o.status.success())
+        }
+        "GLPK" => {
+            Command::new("glpsol")
+                .arg("--version")
+                .output()
+                .is_ok_and(|o| o.status.success())
+        }
+        "Conda" => {
+            Command::new("conda")
+                .arg("--version")
+                .output()
+                .is_ok_and(|o| o.status.success())
+        }
+        _ => false,
+    }
+}
+
 pub fn download_required_tools(data_dir: &Path, os: &str, arch: &str) -> Result<()> {
     let items = get_downloads(os, arch)?;
     let client = Client::new();
 
     for item in items {
+        if is_tool_installed(item.name) {
+            println!("{} is already installed on the system. Skipping download.", item.name);
+            continue;
+        }
+
         let path = data_dir.join(item.file);
         println!("Downloading {}...", item.name);
         println!("  from: {}", item.url);
@@ -65,29 +105,6 @@ fn get_downloads(os: &str, arch: &str) -> Result<Vec<Download>> {
                 name: "Python",
                 url: "https://www.python.org/ftp/python/3.13.9/python-3.13.9-macos11.pkg",
                 file: "python-3.13.9-macos11.pkg",
-            },
-            Download {
-                name: "GLPK",
-                url: "https://ftp.gnu.org/gnu/glpk/glpk-5.0.tar.gz",
-                file: "glpk-5.0.tar.gz",
-            },
-        ]),
-
-        ("linux", "x86_64") => Ok(vec![
-            Download {
-                name: "Python",
-                url: "https://www.python.org/ftp/python/3.13.9/Python-3.13.9.tgz",
-                file: "Python-3.13.9.tgz",
-            },
-            Download {
-                name: "Git",
-                url: "https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.45.2.tar.gz",
-                file: "git-2.45.2.tar.gz",
-            },
-            Download {
-                name: "GLPK",
-                url: "https://ftp.gnu.org/gnu/glpk/glpk-5.0.tar.gz",
-                file: "glpk-5.0.tar.gz",
             },
         ]),
 
